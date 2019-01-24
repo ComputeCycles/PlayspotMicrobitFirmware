@@ -5,13 +5,21 @@ Follow instructions here to install required build tools:
 
     https://lancaster-university.github.io/microbit-docs/offline-toolchains/#installation-on-mac-osx
 
-Then copy MicroBitConfig.h.settings to:
+Basically you are getting the python "yotta" tool installed.
+
+Because you need to adjust the defaults for BLE, Then copy MicroBitConfig.h.settings to:
 
     {project root}/yotta_modules/microbit-dal/inc/core/MicroBitConfig.h
 
 Then in the root dir of the project do:
 
-    yt clean && yt build
+    yt target bbc-microbit-classic-gcc && yt clean && yt build
+
+Then drop:
+
+    {project root}/build/bbc-microbit-classic-gcc/source/microbit-samples-combined.hex
+
+on the mount that pops up when you plug the microbit into your computer
 
  */
 
