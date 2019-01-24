@@ -1,76 +1,41 @@
+/*
+1/24/18 - rvs
+
+Follow instructions here to install required build tools:
+
+    https://lancaster-university.github.io/microbit-docs/offline-toolchains/#installation-on-mac-osx
+
+Then copy MicroBitConfig.h.settings to:
+
+    {project root}/yotta_modules/microbit-dal/inc/core/MicroBitConfig.h
+
+Then in the root dir of the project do:
+
+    yt clean && yt build
+
+ */
+
 #include "MicroBit.h"
 #include "MicroBitUARTService.h"
 
 MicroBit uBit;
 MicroBitImage currentFrame;
 
-const char *wakeAnim[] = {
-    "0,0,0,0,0\n0,0,0,0,0\n0,0,1,0,0\n0,0,0,0,0\n0,0,0,0,0\n",
-    "0,0,0,0,0\n0,1,1,1,0\n0,1,1,1,0\n0,1,1,1,0\n0,0,0,0,0\n",
-    "1,1,1,1,1\n1,1,1,1,1\n1,1,1,1,1\n1,1,1,1,1\n1,1,1,1,1\n"
-};
- 
-void wake()
-{
-    uBit.display.setBrightness(0);
-    // Turn on all pixels.
-    for(int y=0; y<5; y++) {
-        for(int x=0; x<5; x++) {
-            uBit.display.image.setPixelValue(x, y, 1);
-        }
-    }
-    
-    // Fade in all LEDs.
-    for(int i=0; i<255; i++) {
-        uBit.display.setBrightness(i);
-        uBit.sleep(5);
-    }
-    // Fade out all LEDs.
-    for(int i=255; i>0; i--) {
-        uBit.display.setBrightness(i);
-        uBit.sleep(5);
-    }
-    
-    // Set brightness back to full and clear screen.
-    uBit.display.image.clear();
-    uBit.display.setBrightness(255);
-    
-    // Pulsing animation.
-    int animDelay = 50;
-    for(int j=0; j<15; j++) {
-        for(int i=0; i<3; i++) {
-            currentFrame = MicroBitImage(wakeAnim[i]);
-            uBit.display.print(currentFrame,0,0,0,animDelay);
-        }
-        for(int i=2; i>-1; i--) {
-            currentFrame = MicroBitImage(wakeAnim[i]);
-            uBit.display.print(currentFrame,0,0,0,animDelay);
-        }
-        animDelay -= 3;
-    }
-    
-    // Fade out last dot.
-    for(int i=255; i>=0; i--) {
-        uBit.display.setBrightness(i);
-        uBit.sleep(1);
-    }
-    
-    // Clear display and set brightnes back to full.
-    uBit.display.image.clear();
-    uBit.display.setBrightness(255);
-    
-    uBit.sleep(500);
-    
-}
+MicroBitImage cross("255,0,0,0,255\n0,255,0,255,0\n0,0,255,0,0\n0,255,0,255,0\n255,0,0,0,255\n");
+MicroBitImage check("0,0,0,0,255\n0,0,0,255,0\n255,0,255,0,0\n0,255,0,0,0\n0,0,0,0,0\n");
 
+int connectedState = 0;
+ 
 void onConnected(MicroBitEvent)
 {
-    uBit.display.print("C");
+    connectedState = 1;
+    uBit.display.print(check, 0, 0, 0);
 }
 
 void onDisconnected(MicroBitEvent)
 {
-    uBit.display.print("D");
+    connectedState = 0;
+    uBit.display.print(cross, 0, 0, 0);
 }
 
 int main()
@@ -79,9 +44,6 @@ int main()
     uBit.init();
 
     // wake();
-    uBit.display.scroll("PLAYSPOT!");
-    uBit.display.print("D");
-
     uBit.messageBus.listen(MICROBIT_ID_BLE, MICROBIT_BLE_EVT_CONNECTED, onConnected);
     uBit.messageBus.listen(MICROBIT_ID_BLE, MICROBIT_BLE_EVT_DISCONNECTED, onDisconnected);
 
@@ -91,6 +53,8 @@ int main()
     new MicroBitMagnetometerService(*uBit.ble, uBit.compass);
     new MicroBitTemperatureService(*uBit.ble, uBit.thermometer);
 
+    uBit.display.print(connectedState == 1 ? check : cross, 0, 0, 0);
+  
     // If main exits, there may still be other fibers running or registered event handlers etc.
     // Simply release this fiber, which will mean we enter the scheduler. Worse case, we then
     // sit in the idle task forever, in a power efficient sleep.
